@@ -7,39 +7,11 @@
 
 import SwiftUI
 
-struct ExpenseItem: Identifiable, Codable {
-    var id = UUID()
-    let name: String
-    let type: String
-    let amount: Double
-}
-
-@Observable
-class Expenses {
-    var items = [ExpenseItem]() {
-        didSet {
-            if let encoded = try? JSONEncoder().encode(items) {
-                UserDefaults.standard.set(encoded, forKey: "Items")
-            }
-        }
-    }
-
-    init() {
-        if let savedItems = UserDefaults.standard.data(forKey: "Items") {
-            if let decodedItems = try? JSONDecoder().decode([ExpenseItem].self, from: savedItems) {
-                items = decodedItems
-                return
-            }
-        }
-
-        items = []
-    }
-}
 
 struct ContentView: View {
     @State private var expenses = Expenses()
+    @State private var navigateToAddExpense = false
 
-    @State private var showingAddExpense = false
 
     var body: some View {
         NavigationStack {
@@ -49,11 +21,12 @@ struct ContentView: View {
                         VStack(alignment: .leading) {
                             Text(item.name)
                                 .font(.headline)
-
                             Text(item.type)
                         }
 
+
                         Spacer()
+
 
                         Text(item.amount, format: .currency(code: "USD"))
                     }
@@ -62,20 +35,31 @@ struct ContentView: View {
             }
             .navigationTitle("iExpense")
             .toolbar {
-                Button("Add Expense", systemImage: "plus") {
-                    showingAddExpense = true
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        navigateToAddExpense = true
+                    } label: {
+                        Image(systemName: "plus")
+                    }
                 }
             }
-            .sheet(isPresented: $showingAddExpense) {
-                AddView(expenses: expenses)
-            }
+            .background(
+                NavigationLink(
+                    "",
+                    destination: AddView(expenses: expenses),
+                    isActive: $navigateToAddExpense
+                )
+                .opacity(0) // Hide link
+            )
         }
     }
+
 
     func removeItems(at offsets: IndexSet) {
         expenses.items.remove(atOffsets: offsets)
     }
 }
+
 
 #Preview {
     ContentView()
